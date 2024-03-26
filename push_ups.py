@@ -11,11 +11,12 @@ from urllib3.exceptions import NewConnectionError
 BASE_URL = 'http://localhost:5099/api/'
 
 path_json = "configuration.json"
-with open(path_json,'r') as json_file:
+with open(path_json, 'r') as json_file:
     data = json.loads(json_file.read())
 
 SERVICE_USER_EMAIL = data['PushUpAccountEmail']
 SERVICE_USER_PASSWORD = data['PushUpAccountPassword']
+
 
 async def send_email(email_to, message, subject):
     smtpObj = smtplib.SMTP('smtp.mail.ru', 587)
@@ -29,9 +30,11 @@ async def send_email(email_to, message, subject):
     smtpObj.sendmail(SERVICE_USER_EMAIL, email_to, msg.as_string())
     smtpObj.quit()
 
+
 async def get_token_jwt() -> str:
     try:
-        response = requests.get(BASE_URL+f'Token/signIn?email={SERVICE_USER_EMAIL}')
+        response = requests.get(BASE_URL+'Token/signIn?email=' +
+            SERVICE_USER_EMAIL)
         return response.text
     except ConnectionRefusedError:
         print('Отсутствует подключение к серверу!')
@@ -43,7 +46,8 @@ async def get_token_jwt() -> str:
 
 async def refresh_token_jwt(oldToken: str) -> str:
     try:
-        response = requests.get(BASE_URL+f'Token/refreshToken?oldToken={oldToken}')
+        response = requests.get(BASE_URL+'Token/refreshToken?oldToken=' +
+            oldToken)
         return response.text
     except ConnectionRefusedError:
         print('Отсутствует подключение к серверу!')
@@ -52,36 +56,47 @@ async def refresh_token_jwt(oldToken: str) -> str:
     except ConnectionError:
         print('Отсутствует подключение к серверу!')
 
+
 async def check_date_tasks(jwtToken: str):
     try:
         count_pushups = 0
         pushups = {}
-        response_status_tasks = requests.get(BASE_URL+'StatusTasks',headers={
+        response_status_tasks = requests.get(BASE_URL+'StatusTasks', headers={
             'Authorization': f'Bearer {jwtToken}'
         })
         statustasks_list = []
         for statustask in response_status_tasks.json():
-            if(statustask['nameStatusTask'] == 'Задана' or statustask['nameStatusTask'] == 'Просрочена'):
+            if (statustask['nameStatusTask'] == 'Задана' or
+                statustask['nameStatusTask'] == 'Просрочена'):
                 statustasks_list.append(statustask['idStatusTask'])
         response_tasks = requests.get(BASE_URL+'Tasks', headers={
             'Authorization': f'Bearer {jwtToken}'
         })
         for task in response_tasks.json():
-            section_response = requests.get(BASE_URL+f"Sections/{task['sectionId']}", headers={
+            section_response = requests.get(BASE_URL+"Sections/" +
+                task['sectionId'], headers={
                 'Authorization': f'Bearer {jwtToken}'
             })
             section_data = section_response.json()
-            executor_response = requests.get(BASE_URL+f"Executors/gettask/{task['idTask']}",headers={
+            executor_response = requests.get(BASE_URL+"Executors/gettask/" +
+                task['idTask'], headers={
                 'Authorization': f'Bearer {jwtToken}'
             })
-            user_executor_response = requests.get(BASE_URL+f"Users/{executor_response.json()['userExecutor']}",headers={
+            user_executor_response = requests.get(BASE_URL+"Users/" + 
+                executor_response.json()['userExecutor'],headers={
                 'Authorization': f'Bearer {jwtToken}'
             })
             user_executor_data = user_executor_response.json()
             current_date = datetime.datetime.now()
-            convert_deadline_date_task = datetime.datetime.strptime(task['dateDeadlineTask'],'%Y-%m-%d')
-            if(current_date > convert_deadline_date_task and task['statusTaskId'] == statustasks_list[0]):
-                response_from_update = requests.put(BASE_URL+f"Tasks/{task['idTask']}", json={
+            convert_deadline_date_task = datetime.datetime.strptime(
+                task['dateDeadlineTask'],
+                '%Y-%m-%d'
+            )
+            if(current_date > convert_deadline_date_task and
+               task['statusTaskId'] == statustasks_list[0]):
+                response_from_update = requests.put(BASE_URL+"Tasks/" +
+                task['idTask'], 
+                json={
                     'idTask': task['idTask'],
                     'bodyTask': task['bodyTask'],
                     'dateCreatingTask': task['dateCreatingTask'],
@@ -93,12 +108,19 @@ async def check_date_tasks(jwtToken: str):
                     'statusTaskId': statustasks_list[1],
                     'sectionId': task['sectionId']
                 }, headers={'Authorization': f'Bearer {jwtToken}'})
-                await send_email(user_executor_data['emailUser'], f"Здравствуйте, {user_executor_data['surnameUser']} {user_executor_data['nameUser']}! Доводим до вашего сведения, что задание {section_data['nameSection']} было просрочено!", f"Уведомление о просроченности срока выполнения задания {section_data['nameSection']}")
+                await send_email(user_executor_data['emailUser'], 
+                f"Здравствуйте, {user_executor_data['surnameUser']} {user_executor_data['nameUser']}!" + 
+                f"Доводим до вашего сведения, что задание {section_data['nameSection']} было просрочено!", 
+                f"Уведомление о просроченности срока выполнения задания {section_data['nameSection']}")
                 count_pushups += 1
                 pushups[count_pushups] = 'Было обнаружено просроченное задание! Уведомление выслано!'
-            elif (current_date == convert_deadline_date_task and task['statusTaskId'] == statustasks_list[0]):
+            elif (current_date == convert_deadline_date_task and 
+                    task['statusTaskId'] == statustasks_list[0]):
                 current_time = datetime.datetime.now().time()
-                convert_deadline_time_task = datetime.datetime.strptime(task['timeDeadlineTask'], '%H:%M:%S')
+                convert_deadline_time_task = datetime.datetime.strptime(
+                    task['timeDeadlineTask'],
+                    '%H:%M:%S'
+                )
                 if(current_time >= convert_deadline_time_task.time()):
                     response_from_update = requests.put(BASE_URL+f"Tasks/{task['idTask']}", json={
                         'idTask': task['idTask'],
@@ -112,15 +134,27 @@ async def check_date_tasks(jwtToken: str):
                         'statusTaskId': statustasks_list[1],
                         'sectionId': task['sectionId']
                     }, headers={'Authorization': f'Bearer {jwtToken}'})
-                    await send_email(user_executor_data['emailUser'], f"Здравствуйте, {user_executor_data['surnameUser']} {user_executor_data['nameUser']}! Доводим до вашего сведения, что задание {section_data['nameSection']} было просрочено!", f"Уведомление о просроченности срока выполнения задания {section_data['nameSection']}")
+                    await send_email(user_executor_data['emailUser'],
+                    f"Здравствуйте, {user_executor_data['surnameUser']} {user_executor_data['nameUser']}!" +
+                    f"Доводим до вашего сведения, что задание {section_data['nameSection']} было просрочено!",
+                    f"Уведомление о просроченности срока выполнения задания {section_data['nameSection']}")
                     count_pushups += 1
                     pushups[count_pushups] = 'Было обнаружено просроченное задание! Уведомление выслано!'
-            elif(current_date - timedelta(days=1) == convert_deadline_date_task and task['statusTaskId'] == statustasks_list[0]):
-                await send_email(user_executor_data['emailUser'], f"Здравствуйте, {user_executor_data['surnameUser']} {user_executor_data['nameUser']}! Напоминаем, что завтра истекает срок сдачи задания {section_data['nameSection']}!", f"Напоминание о окончании срока выполнения задания {section_data['nameSection']}")
+            elif(current_date - timedelta(days=1) == convert_deadline_date_task and 
+                task['statusTaskId'] == statustasks_list[0]):
+                await send_email(user_executor_data['emailUser'],
+                f"Здравствуйте, {user_executor_data['surnameUser']} {user_executor_data['nameUser']}!" + 
+                f"Напоминаем, что завтра истекает срок сдачи задания {section_data['nameSection']}!",
+                f"Напоминание о окончании срока выполнения задания {section_data['nameSection']}")
                 count_pushups += 1
                 pushups[count_pushups] = 'Было отправлено напоминание об окончании срока выполнения задания!'
-            elif(current_date - timedelta(days=5) == convert_deadline_date_task and task['statusTaskId'] == statustasks_list[0]):
-                await send_email(user_executor_data['emailUser'], f"Здравствуйте, {user_executor_data['surnameUser']} {user_executor_data['nameUser']}! Напоминаем, что через 5 дней ({datetime.datetime.strptime(task['dateDeadlineTask'],'%d.%m.%Y')}) истекает срок сдачи задания {section_data['nameSection']}!", f"Напоминание о окончании срока выполнения задания {section_data['nameSection']}")
+            elif(current_date - timedelta(days=5) == convert_deadline_date_task and 
+                task['statusTaskId'] == statustasks_list[0]):
+                await send_email(user_executor_data['emailUser'],
+                f"Здравствуйте, {user_executor_data['surnameUser']} {user_executor_data['nameUser']}! " +
+                f"Напоминаем, что через 5 дней ({datetime.datetime.strptime(task['dateDeadlineTask'],'%d.%m.%Y')}) " +
+                f"истекает срок сдачи задания {section_data['nameSection']}!", 
+                f"Напоминание о окончании срока выполнения задания {section_data['nameSection']}")
                 count_pushups += 1
                 pushups[count_pushups] = 'Было отправлено напоминание об окончании срока выполнения задания!'
             else:
@@ -140,9 +174,12 @@ async def main():
     while True:
         pushups = await check_date_tasks(token_jwt)
         for pushup in pushups:
-            print(f'[{datetime.datetime.now().date()} | {datetime.datetime.now().time()}] - {pushups[pushup]}')
+            print(f'[{datetime.datetime.now().date()}' +
+            f'| {datetime.datetime.now().time()}]' 
+            f'- {pushups[pushup]}')
         await asyncio.sleep(600)
         token_jwt = await refresh_token_jwt(token_jwt)
+
 
 if __name__ == '__main__':
     try:
