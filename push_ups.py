@@ -152,7 +152,8 @@ async def check_date_tasks(jwtToken: str):
                                      f"Здравствуйте, " +
                                      f"{user_executor_data['surnameUser']}" +
                                      f"{user_executor_data['nameUser']}!" +
-                                     f"Доводим до вашего сведения, что задание " +
+                                     f"Доводим до вашего сведения, " +
+                                     "что задание " +
                                      f"{section_data['nameSection']}" +
                                      " было просрочено!",
                                      f"Уведомление о просроченности " +
@@ -161,7 +162,8 @@ async def check_date_tasks(jwtToken: str):
                     count_pushups += 1
                     pushups[count_pushups] = ('Было обнаружено просроченное' +
                                               ' задание! Уведомление выслано!')
-            elif(current_date - timedelta(days=1) == convert_deadline_date_task and 
+            elif((current_date -
+                  timedelta(days=1)) == convert_deadline_date_task and
                 task['statusTaskId'] == statustasks_list[0]):
                 await send_email(user_executor_data['emailUser'],
                                  f"Здравствуйте, " +
@@ -174,26 +176,32 @@ async def check_date_tasks(jwtToken: str):
                 count_pushups += 1
                 pushups[count_pushups] = ('Было отправлено напоминание об' +
                                           'окончании срока выполнения задания!')
-            elif(current_date - timedelta(days=5) == convert_deadline_date_task and
+            elif((current_date -
+                  timedelta(days=5)) == convert_deadline_date_task and
                  task['statusTaskId'] == statustasks_list[0]):
-                deadline_date = datetime.datetime.strptime(task['dateDeadlineTask'],
+                deadline = task['dateDeadlineTask']
+                deadline_date = datetime.datetime.strptime(deadline,
                                                            '%d.%m.%Y')
                 await send_email(user_executor_data['emailUser'],
-                                 f"Здравствуйте, {user_executor_data['surnameUser']} " +
+                                 f"Здравствуйте, " +
+                                 f"{user_executor_data['surnameUser']} " +
                                  f"{user_executor_data['nameUser']}! " +
                                  f"Напоминаем, что через 5 дней " +
                                  f"({deadline_date})" +
                                  f"истекает срок сдачи задания " +
                                  f"{section_data['nameSection']}!",
-                                 f"Напоминание о окончании срока выполнения " +
+                                 f"Напоминание о окончании " +
+                                 "срока выполнения " +
                                  f"задания {section_data['nameSection']}")
                 count_pushups += 1
                 pushups[count_pushups] = ('Было отправлено напоминание об ' +
                                           'окончании срока выполнения задания!')
             else:
                 count_pushups += 1
-                pushups[count_pushups] = ('Не было обнаружено ни просроченных заданий ' +
-                                          'ни приближавшихся к окончанию срока ' +
+                pushups[count_pushups] = ('Не было обнаружено ни ' +
+                                          'просроченных заданий ' +
+                                          'ни приближавшихся к ' +
+                                          'окончанию срока ' +
                                           'выполнения заданий!')
         return pushups
     except ConnectionRefusedError:
