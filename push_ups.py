@@ -181,7 +181,7 @@ async def check_date_tasks(jwtToken: str):
                                           'задания!')
             elif ((current_date -
                   timedelta(days=5)) == convert_deadline_date_task and
-                 task['statusTaskId'] == statustasks_list[0]):
+                  task['statusTaskId'] == statustasks_list[0]):
                 deadline = task['dateDeadlineTask']
                 deadline_date = datetime.datetime.strptime(deadline,
                                                            '%d.%m.%Y')
