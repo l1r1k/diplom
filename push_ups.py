@@ -74,18 +74,24 @@ async def check_date_tasks(jwtToken: str):
         })
         for task in response_tasks.json():
             section_response = requests.get(BASE_URL+"Sections/" +
-                                            task['sectionId'], headers={
+                task['sectionId'],
+                headers={
                     'Authorization': f'Bearer {jwtToken}'
-                })
+                }
+            )
             section_data = section_response.json()
             executor_response = requests.get(BASE_URL+"Executors/gettask/" +
-                                            task['idTask'], headers={
+                task['idTask'],
+                headers={
                     'Authorization': f'Bearer {jwtToken}'
-                })
+                }
+            )
             user_executor_response = requests.get(BASE_URL+"Users/" +
-                                                  executor_response.json()['userExecutor'], headers={
+                executor_response.json()['userExecutor'],
+                headers={
                     'Authorization': f'Bearer {jwtToken}'
-                })
+                }
+            )
             user_executor_data = user_executor_response.json()
             current_date = datetime.datetime.now()
             convert_deadline_date_task = datetime.datetime.strptime(
@@ -95,7 +101,7 @@ async def check_date_tasks(jwtToken: str):
             if (current_date > convert_deadline_date_task and
                task['statusTaskId'] == statustasks_list[0]):
                 response_from_update = requests.put(BASE_URL+"Tasks/" +
-                                                    task['idTask'],
+                    task['idTask'],
                     json={
                         'idTask': task['idTask'],
                         'bodyTask': task['bodyTask'],
@@ -107,7 +113,8 @@ async def check_date_tasks(jwtToken: str):
                         'timeUploadDocument': task['timeUploadDocument'],
                         'statusTaskId': statustasks_list[1],
                         'sectionId': task['sectionId']
-                    }, headers={'Authorization': f'Bearer {jwtToken}'})
+                    },
+                    headers={'Authorization': f'Bearer {jwtToken}'})
                 await send_email(user_executor_data['emailUser'],
                     f"Здравствуйте, {user_executor_data['surnameUser']}" +
                     f"{user_executor_data['nameUser']}!" +
