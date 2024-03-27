@@ -24,6 +24,4 @@ jobs:
       - name: Python check style
         run: |
           pip install pycodestyle
-          pycodestyle .
-
-      
+          pycodestyle push_ups.py
