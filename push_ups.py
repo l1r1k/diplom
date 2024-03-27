@@ -74,7 +74,6 @@ async def check_date_tasks(jwtToken: str):
                 statustasks_list.append(statustask['idStatusTask'])
         response_tasks = requests.get(BASE_URL+'Tasks', headers=headers)
         for task in response_tasks.json():
-            
             section_response = requests.get(BASE_URL+"Sections/" +
                                             task['sectionId'],
                                             headers=headers)
@@ -143,14 +142,21 @@ async def check_date_tasks(jwtToken: str):
                         'statusTaskId': statustasks_list[1],
                         'sectionId': task['sectionId']
                         }
-                    response_from_update = requests.put(BASE_URL+f"Tasks/{task['idTask']}",
-                                                        json=json_data, headers=headers)
+                    id_task = task['idTask']
+                    response_from_update = requests.put(BASE_URL +
+                                                        "Tasks/" +
+                                                        f"{id_task}",
+                                                        json=json_data,
+                                                        headers=headers)
                     await send_email(user_executor_data['emailUser'],
-                                     f"Здравствуйте, {user_executor_data['surnameUser']}" +
+                                     f"Здравствуйте, " +
+                                     f"{user_executor_data['surnameUser']}" +
                                      f"{user_executor_data['nameUser']}!" +
                                      f"Доводим до вашего сведения, что задание " +
-                                     f"{section_data['nameSection']} было просрочено!",
-                                     f"Уведомление о просроченности срока выполнения " +
+                                     f"{section_data['nameSection']}" +
+                                     " было просрочено!",
+                                     f"Уведомление о просроченности " +
+                                     "срока выполнения " +
                                      f"задания {section_data['nameSection']}")
                     count_pushups += 1
                     pushups[count_pushups] = ('Было обнаружено просроченное' +
@@ -158,7 +164,8 @@ async def check_date_tasks(jwtToken: str):
             elif(current_date - timedelta(days=1) == convert_deadline_date_task and 
                 task['statusTaskId'] == statustasks_list[0]):
                 await send_email(user_executor_data['emailUser'],
-                                 f"Здравствуйте, {user_executor_data['surnameUser']}" +
+                                 f"Здравствуйте, " +
+                                 f"{user_executor_data['surnameUser']}" +
                                  f" {user_executor_data['nameUser']}!" +
                                  f"Напоминаем, что завтра истекает срок сдачи " +
                                  f"задания {section_data['nameSection']}!",
@@ -203,8 +210,8 @@ async def main():
         pushups = await check_date_tasks(token_jwt)
         for pushup in pushups:
             print(f'[{datetime.datetime.now().date()}' +
-            f'| {datetime.datetime.now().time()}]' 
-            f'- {pushups[pushup]}')
+                  f'| {datetime.datetime.now().time()}]' +
+                  f'- {pushups[pushup]}')
         await asyncio.sleep(600)
         token_jwt = await refresh_token_jwt(token_jwt)
 
