@@ -162,21 +162,24 @@ async def check_date_tasks(jwtToken: str):
                     count_pushups += 1
                     pushups[count_pushups] = ('Было обнаружено просроченное' +
                                               ' задание! Уведомление выслано!')
-            elif((current_date -
+            elif ((current_date -
                   timedelta(days=1)) == convert_deadline_date_task and
-                task['statusTaskId'] == statustasks_list[0]):
+                  task['statusTaskId'] == statustasks_list[0]):
                 await send_email(user_executor_data['emailUser'],
                                  f"Здравствуйте, " +
                                  f"{user_executor_data['surnameUser']}" +
                                  f" {user_executor_data['nameUser']}!" +
-                                 f"Напоминаем, что завтра истекает срок сдачи " +
-                                 f"задания {section_data['nameSection']}!",
-                                 f"Напоминание о окончании срока выполнения " +
+                                 "Напоминаем, что завтра истекает срок " +
+                                 "сдачи задания " +
+                                 f"{section_data['nameSection']}!",
+                                 "Напоминание о окончании " +
+                                 "срока выполнения " +
                                  f"задания {section_data['nameSection']}")
                 count_pushups += 1
                 pushups[count_pushups] = ('Было отправлено напоминание об' +
-                                          'окончании срока выполнения задания!')
-            elif((current_date -
+                                          'окончании срока выполнения ' +
+                                          'задания!')
+            elif ((current_date -
                   timedelta(days=5)) == convert_deadline_date_task and
                  task['statusTaskId'] == statustasks_list[0]):
                 deadline = task['dateDeadlineTask']
@@ -195,7 +198,8 @@ async def check_date_tasks(jwtToken: str):
                                  f"задания {section_data['nameSection']}")
                 count_pushups += 1
                 pushups[count_pushups] = ('Было отправлено напоминание об ' +
-                                          'окончании срока выполнения задания!')
+                                          'окончании срока выполнения ' +
+                                          'задания!')
             else:
                 count_pushups += 1
                 pushups[count_pushups] = ('Не было обнаружено ни ' +
